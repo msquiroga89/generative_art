@@ -1,7 +1,10 @@
 # primer intento en hacer arte generativo
 # https://koenderks.github.io/aRtsy/
 # install.packages("aRtsy")
+memory.limit(size=250000)
+
 library(aRtsy)
+library(Rcpp)
 library(RColorBrewer)
 
 #' When you think of the act of painting, you probably imagine stroking paint on 
@@ -69,8 +72,8 @@ canvas_turmite(color = '#b5179e', background = '#000000', p = 0.5,
 # The ant is able to cycle through different colors which correspond to different 
 # combinations of these rules.
 
-canvas_ant(colors = mycolors, background = '#fafafa', iterations = 1e8,
-           width = 200, height = 200)
+canvas_ant(colors = mycolors, background = '#fafafa', iterations = 1e9,
+           width = 500, height = 500)
 
 
 
@@ -82,9 +85,6 @@ canvas_ant(colors = mycolors, background = '#fafafa', iterations = 1e8,
 #' automata (inspired by an idea from Fronkonstin) to fill in their surfaces.
 
 # Sun behind Earth and Moon
-
-mycolors <- c(, , 
-              , "#4cc9f0")
 
 set.seed(55)
 colors <- list(c('#f72585', '#b5179e', '#7209b7'),
@@ -103,7 +103,7 @@ canvas_planet(colors, radius = c(800, 400, 150),
 #' is determined randomly.
 
 set.seed(1)
-canvas_segments(colors = mycolors, background = '#ffffff', n = 1000, p = 0.3, H = 0.5)
+canvas_segments(colors = mycolors, background = '#ffffff', n = 999, p = 0.05, H = 11)
 
 
 
@@ -124,9 +124,9 @@ canvas_diamonds(colors = mycolors,
 #' and rectangles instead of lines. It works by repeatedly cutting into the 
 #' canvas at random locations and coloring the area that these cuts create.
 
-set.seed(16)
+set.seed(156)
 canvas_squares(colors = mycolors,
-               cuts = 50, ratio = 1.618, width = 100, height = 100)
+               cuts = 51.05, ratio = 1.5, width = 500, height = 500)
 
 
 
@@ -161,8 +161,9 @@ canvas_polylines(colors = mycolors,
 #' In this algorithm, the position of every single point is calculated by a 
 #' formula which has random parameters.
 
-set.seed(434)
-canvas_function(color = '#3f37c9', background = '#4361ee')
+set.seed(340)
+set.seed(700)
+canvas_function(color = '#4361ee', background = '#4cc9f0')
 
 
 
@@ -184,5 +185,11 @@ canvas_mandelbrot(colors = mycolors, zoom = 5.55)
 #' invariant property thereof, changes according to two or more of its parameters”.
 
 canvas_circlemap(colors = mycolors,
-                 x_min = 10, x_max = 11, y_min = 0, y_max = 10, 
-                 iterations = 100, width = 1500, height = 1500)
+                 x_min = 0, x_max = 13.89, y_min = 0, y_max = 1.054, 
+                 iterations = 2, width = 1500, height = 1500)
+
+
+
+
+canvas_mosaic(colors = c('dodgerblue', 'forestgreen', 'white'), kmax = 1, n = 1000, resolution = 500)
+
