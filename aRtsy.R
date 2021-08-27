@@ -1,7 +1,7 @@
 # primer intento en hacer arte generativo
 # https://koenderks.github.io/aRtsy/
 # install.packages("aRtsy")
-memory.limit(size=250000)
+# memory.limit(size=250000)
 
 library(aRtsy)
 library(Rcpp)
@@ -54,7 +54,7 @@ canvas_collatz(colors = mycolors, background = '#fafafa', n = 1234,
 
 set.seed(66678)
 canvas_turmite(color = '#b5179e', background = '#000000', p = 0.5, 
-               iterations = 1e6, width = 1500, height = 500)
+               iterations = 1e6, width = 500, height = 500)
 
 
 
@@ -112,10 +112,10 @@ canvas_segments(colors = mycolors, background = '#ffffff', n = 999, p = 0.05, H 
 #' This function creates a set of diamonds on a canvas. The diamonds are filled 
 #' in using a random color assignment.
 
-set.seed(5)
+set.seed(0.5)
 canvas_diamonds(colors = mycolors, 
-                background = '#fafafa', col.line = 'black', radius = 5, alpha = 0.80, 
-                p = 0.2, width = 500, height = 500)
+                background = '#fafafa', col.line = 'black', radius = 15, alpha = 0.80, 
+                p = 0.02, width = 500, height = 500)
 
 
 # Squares and rectangles --------------------------------------------------
@@ -165,6 +165,9 @@ set.seed(340)
 set.seed(700)
 canvas_function(color = '#4361ee', background = '#4cc9f0')
 
+
+set.seed(2)
+canvas_function(color = '#b5179e', background = '#480ca8')
 
 
 # Mandelbrot --------------------------------------------------------------
