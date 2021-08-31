@@ -18,12 +18,20 @@ library(RColorBrewer)
 mycolors <- c("#f72585", "#b5179e", "#7209b7", "#560bad", "#480ca8", "#3a0ca3", 
               "#3f37c9", "#4361ee", "#4895ef", "#4cc9f0")
 
+# manhattan street https://www.schemecolor.com/manhattan-street.php
+color2 <- c("#E3A400", "#1D576E", "#948E83", "#CBBFAE", "#B89780", "#8F4531")
+
 set.seed(2)
 canvas_strokes(colors = mycolors, 
                neighbors = 1, p = 0.01, iterations = 7, 
                width = 500, height = 500, side = TRUE)
 
-
+# color2
+set.seed(99)
+canvas_strokes(colors = color2, 
+               neighbors = 1, p = 0.0027, iterations = 4, 
+               width = 500, height = 500, side = TRUE)
+# ne 3
 
 #' Collatz conjecture
 #' The Collatz conjecture is also known as 3x+1. The algorithm draws lines 
