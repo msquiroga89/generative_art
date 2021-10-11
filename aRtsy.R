@@ -115,8 +115,15 @@ colors <- list(c('#f72585', '#b5179e', '#7209b7'),
 canvas_planet(colors, radius = c(800, 400, 150), 
               center.x = c(1, 500, 1100),
               center.y = c(1400, 500, 1000), 
-              starprob = 0.005)
+              starprob = 0.005,
+              width = 1500, height = 500)
 
+set.seed(639)
+canvas_planet(color2, radius = c(100, 50, 20), 
+              center.x = c(10, 20, 500),
+              center.y = c(10, 20, 500), 
+              starprob = 0.006,
+              width = 500, height = 500)
 
 # Segments ----------------------------------------------------------------
 
@@ -202,8 +209,9 @@ canvas_function(color = "#1D576E", background = "#E3A400")
 #' of a complex structure arising from the application of simple rules. You can 
 #' zoom in on the set and apply some color to create these nice images.
 
+tiff('mandelbrot.tiff', units="in", width=5, height=5, res=300, compression = 'lzw')
 canvas_mandelbrot(colors = mycolors, zoom = 5.55)
-
+dev.off()
 
 # Circle maps -------------------------------------------------------------
 
