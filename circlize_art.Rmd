@@ -1,0 +1,205 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Get First 100000 digits of Pi 
+
+After bit of googling, I stumbled across this [this site](http://www.geom.uiuc.edu/~huberty/math5337/groupe/welcome.html), so I decided to get first 100000 digits from below website. 
+
+However, later I discovered another site where you can download the txt file, so I could've used [this site](https://www.angio.net/pi/digits.html) instead, and might have been bit simpler. 
+
+```{r get_pi, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Here are packages I'm going to use.
+library(tidyverse)  
+library(tidytext) ## so I can break single digit per line 
+library(circlize)
+
+
+df <-data.frame(x =read_lines("http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html"))
+
+
+df$x <- as.character(df$x)
+df <- df %>% slice(-1:-12)  ## discard first 12 lines
+df <- df %>% slice(1:1283)  ## anything after 1283 is not pi so i only want to grab 1~1283
+
+```
+
+
+## Prepping Data Frame for Visualization 
+
+Now I have first  100000 digits of pi as character, I wanted to put them into data frame where each line would contain only 1 digit.  
+
+Pretty sure there's likely different way of doing this, but I decided I want to utilize [tidytext package](https://cran.r-project.org/web/packages/tidytext/index.html), that I've recently started to use.  
+
+
+```{r making_df, echo=FALSE}
+
+## I used unnest_tokens to separate out the character!
+df_tidy_1 <- df %>% 
+  ## use unnest_tokens with token = character_shingles option.
+  unnest_tokens(cur, x, token = "character_shingles", n=1) %>% 
+  mutate(pos=row_number()-1, ## position, i want to start from 0
+         nxt_1 = lead(cur),  ## what digit follows current position of number
+         nxt_2 = lead(cur,n=2), ## Just for fun... :) 
+         nxt_3 = lead(cur,n=3),
+         nxt_4 = lead(cur,n=4),
+         nxt_5 = lead(cur,n=5)) %>%
+  mutate_if(is.character, as.numeric) ## I wanted to make them into numeric, instead of leaving it as character.
+
+
+```
+
+Then I went bit overload on appending extra information that I thought I might utilize later to visualize...  While working on below I've discovered that if you pick any 4 digits number you like, it will appear at least once somewhere in first 100K digits of pi! (which I thought was pretty cool...)
+
+For example, if you are looking for sequence of 8864, then it will appear 10 times in first 100K digits of pi, and first one appears at 2384 decimal points.
+
+
+
+```{r adding_extra_info, fig.height=17, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+## Below is NOT needed, but I just wanted to do bit of searching,,,
+df_tidy_1 <- df_tidy_1 %>%
+  group_by(cur) %>%
+  mutate(pos_within_cur = row_number()-1) %>%
+  ungroup() %>%
+  mutate(dig_2 = cur*10 + nxt_1,
+         dig_3 = cur*100 + nxt_1*10 + nxt_2,
+         dig_4 = cur*1000 + nxt_1*100 + nxt_2*10 + nxt_3,
+         dig_5 = cur*10000 + nxt_1*1000 + nxt_2*100 + nxt_3*10 + nxt_4) %>%
+  group_by(dig_2) %>%
+  mutate(pos_within_dig_2 = row_number()-1) %>%
+  ungroup() %>% group_by(dig_3) %>%
+  mutate(pos_within_dig_3 = row_number()-1) %>%
+  ungroup() %>% group_by(dig_4) %>%
+  mutate(pos_within_dig_4 = row_number()-1) %>%
+  ungroup() %>% group_by(dig_5) %>%
+  mutate(pos_within_dig_5 = row_number()-1) %>%
+  ungroup() %>%
+  mutate(up_down_same = case_when(nxt_1>cur ~ "up",
+                                  nxt_1<cur~"down",
+                                  TRUE ~ "same"))
+
+
+```
+
+
+## Having Fun with ggplot2 
+
+Now onto the fun part! Wanted to start off simple... 
+First one is simply first 1000 digits of pi printed, but numbers 0-9 are colour coded, so that it looks bit artsy.  
+
+2nd example, I've replaced colour coded number with dots, but added little twist.  If number are even, then circle is filled, but if numbers are odd, then it is displayed with non-filled circle. 
+
+
+```{r rect_art, echo=TRUE, fig.height=17, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+golden_ratio <- (1+sqrt(5))/2 
+
+nc <- 25  ## Number of columns i want
+#nr <- floor(nc/golden_ratio)  ## use this if you want image wider than longer
+nr <- floor(nc*golden_ratio)  ## Number of rows just calculated based on golden ratio.
+n <- nr*nc ## number of digits to be displayed on graph
+
+df_tidy_1 %>%
+  filter(pos < n) %>%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc)) %>%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  geom_point(shape=19, size=5) +
+  #geom_point(aes(shape=up_down_same)) +
+  geom_text(aes(label=cur, color=factor(cur)), family="Helvetica", size=5) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option="magma", begin=0.2, guide="none") +
+  scale_fill_viridis_d(option="magma", begin=0.2, guide="none") +
+  theme(panel.background = element_rect(fill="#000000")) #+
+  #scale_shape_manual(values=c(25,23,24), guide="none")
+
+#ggsave(filename=str_c("output/rect_",n,"_digits_of_pi_as_dots.png"), width=11, height=11*golden_ratio)
+
+
+## Variation of Above
+df_tidy_1 %>%
+  filter(pos < n) %>%
+  mutate(x = pos %% nc,
+         y = floor(pos / nc),
+         odd = cur %% 2) %>%
+  ggplot(aes(x=x, y=y, color=factor(cur))) +
+  #geom_text(aes(label=cur, color=factor(cur)), family="Helvetica", size=3) +
+  geom_point(aes(shape=factor(odd)), size=5, alpha=0.9) +
+  scale_y_reverse() +
+  theme_void() +
+  scale_color_viridis_d(option="magma", begin=0.3, guide="none") +
+  scale_shape_manual(values=c(19,21), guide="none") +  ##24, 25 triangle
+  theme(panel.background = element_rect(fill="#000000")) 
+
+#ggsave(filename=str_c("output/rect_first_",n,"digits_of_pi_dots2.png"), height=11, width=11*golden_ratio)
+
+
+
+```
+
+## Creating Art with connecting 2 consective digits using geom_segment
+
+This time, I wanted to utilize geom_segment to draw strings in the way that 2 consective digits are connected with strings.  I love viridis palette especially magma palette, so I've stuck to same colour pallette for now, but I can definitely see I can play around with different colour palette.  
+
+For 2nd plot, I've also tried to see what would happen if I've placed plot on polar coordinate.  
+
+```{r string_art, echo=TRUE, fig.height=7, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+n_string <- 10000 ## number of items i'll show in graph
+
+df_tidy_1 %>%
+  filter(pos < n_string) %>%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string),
+         odd = cur %% 2) %>%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.05) +
+  scale_color_viridis_c(option="magma", guide="none", begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill="#000000")) 
+
+#ggsave(file="output/100K_strings_pi_art_plasma.png", width=17, height=floor(17/golden_ratio))
+
+df_tidy_1 %>%
+  filter(pos < n_string) %>%
+  mutate(x = cur + (pos/n_string) ,
+         xend = nxt_1 + (pos/n_string)) %>%
+  ggplot(aes(color=dig_4)) +  
+  geom_segment(aes(x=x, xend=xend, y=0,yend=1), size=0.02) +
+  scale_color_viridis_c(option="magma", guide="none", begin=0.2) + ## i like plasma too
+  theme_void() +
+  theme(panel.background = element_rect(fill="#000000")) +
+  coord_polar(theta="x")
+
+```
+
+
+## Visualizing with Circlize 
+
+Using same colour schema I wanted to also try out plotting digits of pi with circo graph using [circlize package](https://cran.r-project.org/web/packages/circlize/index.html).  I love using [chordDiagram function](https://jokergoo.github.io/circlize_book/book/the-chorddiagram-function.html)! It's amazing just few lines of code, I was able to produce pretty neat chart.  
+
+
+```{r circlize_art, fig.height=11, fig.width=11, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+library(circlize)
+magma_pal <- viridis::magma(n=10, begin=0.2)
+names(magma_pal) <- c(0,1,2,3,4,5,6,7,8,9) ## 
+
+
+par(bg = "#000000",col="#ffffff")
+circos.par(start.degree = 40 )
+chordDiagram(df_tidy_1 %>% filter(pos<4000) %>% select(cur, nxt_1),
+             order = c(0:9),
+             grid.col=magma_pal, 
+             annotationTrack=c("grid","name"),
+             directional = 1)
+
+#circos.clear()
+
+```
+
