@@ -69,3 +69,23 @@ random_points %>%
         panel.grid = element_blank())
 ```
 
+# Layering
+
+```{r}
+cruzado <- tibble(x=c(0, 4,7,10,16,19,22,16,13,10,4,1),
+                  y=c(0,0,-3,0,0,-3,0,0,3,0,0,3))
+
+cruzado %>% 
+  ggplot(aes(x = x, y = y))+
+  geom_polygon(fill = "lightseagreen")+
+  geom_point(color = "mediumpurple3")+
+  geom_point(data = puntos, aes(x=x, y=y, 
+                                size = sample(0:1.5, nrow(puntos),
+                                              replace = TRUE)), 
+             inherit.aes = FALSE)+
+  theme(legend.position = "none")
+
+puntos <- tibble(x = c(2.5, 7.5, 12.5, 18),
+                 y = c(-1.9, 2, -1.9, 2))
+```
+
