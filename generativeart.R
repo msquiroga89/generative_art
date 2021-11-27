@@ -48,9 +48,12 @@ my_formula <- list(
 
 generativeart::generate_img(formula = my_formula, nr_of_img = 5, polar = TRUE, color = "slategray2", background_color = "royalblue4")
 
-a <- rnorm(500, mean = 6, sd = 65)
-b <- rnorm(500, mean = 7, sd = 12)
-df <- data.frame(a, b)
+a <- rnorm(1500, mean = 6, sd = 65)
+b <- rnorm(1500, mean = 7, sd = 12)
+c <- rnorm(1500, mean = 10, sd = 2)
+d <- rnorm(1500, mean = 10, sd = 2)
+
+df <- data.frame(a, b, c, d)
 
 ggplot_themed <- function(data) {
   data %>% 
@@ -65,4 +68,5 @@ ggplot_themed <- function(data) {
 df %>% 
   ggplot_themed()+
   geom_line(aes(a, b, size = 0.5))+
+  geom_line(aes(log(c), log(d+c), color = "red"))+
   coord_polar()
