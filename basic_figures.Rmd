@@ -5,7 +5,7 @@ output:
     df_print: paged
 ---
 
-Meghan Harri's blog: https://www.thetidytrekker.com/post/thinking-outside-the-grid
+Meghan Harris' blog: https://www.thetidytrekker.com/post/thinking-outside-the-grid
 
 Para hacer un cuadrado:
 
@@ -88,4 +88,157 @@ cruzado %>%
 puntos <- tibble(x = c(2.5, 7.5, 12.5, 18),
                  y = c(-1.9, 2, -1.9, 2))
 ```
+
+## Planet Quad
+
+```{r}
+library(tidyverse) # For everything data
+library(cowplot) # For placing plots on top of each other easily with ggdraw and draw_image
+library(patchwork) # For packaging up the plots in the final image
+```
+Primero creamos cuatro colores que corresponden a los cuatro planetas. Los organizamos en un solo dataframe.
+
+```{r}
+Space_colors <- c("Topleft"="#000000",
+                  "Topright"="#130321",
+                  "Bottomleft"="#330500",
+                  "Bottomright"="#8a4500")
+```
+
+Ahora tenemos que armar el df. La función `crossing()` expande un conjunto de vectores para crear todas las combinaciones posibles (por ej, si le doy `x = c(1:2)` y `y = c(2:3)`, me va a dar como resultado columnas con 1-2, 1-3, 2-2, 2-3 y etc). La función `seq()` tiene como argumentos el número inicial, el número final de la secuencia y la cantidad de unidades que se agrega en cada caso (aquí, 1, 101, 201, etc).
+
+```{r}
+stars <- tibble(crossing(x = seq(1,2000,100),
+                         y = seq(1,2000,100)))
+```
+
+Ahora arma una lista para poder iterar sobre los cuatro planetas la misma secuencia, pero con distintos colores.
+
+```{r}
+## Making the list to hold the "space" plots====
+All_stars <- list()
+
+## Iterating through the "space_colors" to make four different plots====
+for(i in seq_along(Space_colors)){ #por cada elemento de space_colors
+  
+  All_stars[[i]] <- stars %>% # creá un elemento en la lista all_stars que sea
+    ggplot(aes(x = x, y = y))+ # este ggplot
+    geom_jitter(size = sample(c(.02,.04,.06,.8),nrow(stars), replace = TRUE), color = "white")+
+    theme_void()+
+    theme(plot.background = element_rect(fill = Space_colors[i], color = "#ffffff", size = 6)) #y el `i` del space_colors es cada uno de los colores de la secuencia
+}
+
+## Naming the plots just to help keep track of what's going where====
+names(All_stars) <- names(Space_colors)
+```
+
+A continuación trabajamos con los planetas. La idea es la misma: iterar cuatro veces la misma función (en este caso, `geom_density2d_filled()`, con `coord_polar()` para hacerlo redondo).
+
+```{r}
+## Setting the color palettes for each planet quad====
+Planet_colors <- list("Topleft" = c("#194157","#008dd7","#085b88","#26925e","#095c88"),
+                      "Topright" = c("#480463","#392242","#1e0329","#bf9232","#120b17"),
+                      "Bottomleft" = c("#47322d","#6b1c09","#a30000","#6b1d09","#851205"),
+                      "Bottomright" = c("#c7a602","#998523","#ba690d","#755b3d","#dbab39"))
+
+## Setting the colors of each planet's borders====
+Planet_borders <- c("Topright" = "#333333",
+                    "Topright" = "#120b17",
+                    "Bottomleft" = "#260f09",
+                    "Bottomright" = "#5c523a")
+```
+
+Luego crea un df aleatorio para darle un toque llamativo al resultado final.
+
+```{r}
+planet <- tibble(crossing(x = sample(1:1000,100, replace = TRUE),
+               y = sample(1:2000, 100, replace = TRUE)))
+```
+ 
+Y nuevamente una lista que contendrá los cuatro resultados del for-loop:
+
+```{r}
+## Making the list to hold the "planet" plots====
+All_planets <- list()
+
+## Iterating through the "planet_colors" to make four different planet plots====
+for(i in seq_along(Planet_colors)){
+  
+  All_planets[[i]] <- planet %>%
+    ggplot(aes(x = x, y = y))+
+    scale_fill_manual(values = sample(Planet_colors[[i]],100, replace = TRUE))+ #100 is just a arbitrary "safe" number I picked. geom_density does background calcs to create levels that varies based on data.
+    geom_density2d_filled(color = Planet_borders[i], size = 2)+
+    coord_polar(clip = "on")+
+    theme_void()+
+    theme(legend.position = "none")
+}
+
+## Naming the plots just to help keep track of what's going where====
+names(All_planets) <- names(Planet_colors)
+```
+
+Puedo guardarlos como imágenes separadas:
+
+```{r}
+# Saving Planets into the directory====
+for(i in seq_along(All_planets)){
+  
+ggsave(paste0("planets/",
+              names(All_planets)[i],
+              "_planet.png"),
+       All_planets[[i]],
+       bg = "transparent", 
+       device = "png")
+}
+```
+
+Podemos volver a llamar a las imágenes hacia el entorno:
+```{r}
+Planet_PNGs <- list()
+
+for(i in seq_along(All_planets)){
+  
+Planet_PNGs[[i]] <- png::readPNG(paste0("planets/",
+                                        names(All_planets)[i],
+                                        "_planet.png"))
+}
+
+## Setting names to keep track of the planets====
+names(Planet_PNGs) <- names(All_planets)
+```
+
+Y entonces podemos aplicar estas imágenes por encima de los cuatro cielos estrellados, con las funciones del paquete `cowplot()`.
+
+```{r}
+Combined_plots <- list()
+
+for(i in seq_along(All_planets)){
+  
+  Combined_plots[[i]] <- ggdraw(All_stars[[i]]) +
+                                  draw_image(Planet_PNGs[[i]])
+}
+
+## Setting names to keep track of the plots===
+names(Combined_plots) <- names(Planet_PNGs)
+```
+
+Se pueden guardar los elementos por separado:
+```{r}
+Topleft <- Combined_plots %>% pluck("Topleft")
+Topright <- Combined_plots %>% pluck("Topright")
+Bottomright <- Combined_plots %>% pluck("Bottomright")
+Bottomleft <- Combined_plots %>% pluck("Bottomleft")
+```
+
+Y usar la sintaxis del paquete `patchwork()` para combinarlos en una sola imagen:
+
+```{r}
+# Final output construction with patchwork functions====
+Planet_Quad <- (Topleft + Topright) / (Bottomleft + Bottomright)
+
+# View the piece#
+Planet_Quad
+```
+
+# Rainbow rose
 
